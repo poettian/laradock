@@ -7,47 +7,7 @@ networks:
     driver: ${NETWORKS_DRIVER}
 
 volumes:
-  mysql:
-    driver: ${VOLUMES_DRIVER}
-  percona:
-    driver: ${VOLUMES_DRIVER}
-  mssql:
-    driver: ${VOLUMES_DRIVER}
-  postgres:
-    driver: ${VOLUMES_DRIVER}
-  memcached:
-    driver: ${VOLUMES_DRIVER}
-  redis:
-    driver: ${VOLUMES_DRIVER}
-  neo4j:
-    driver: ${VOLUMES_DRIVER}
-  mariadb:
-    driver: ${VOLUMES_DRIVER}
-  mongo:
-    driver: ${VOLUMES_DRIVER}
-  minio:
-    driver: ${VOLUMES_DRIVER}
-  rethinkdb:
-    driver: ${VOLUMES_DRIVER}
-  phpmyadmin:
-    driver: ${VOLUMES_DRIVER}
-  adminer:
-    driver: ${VOLUMES_DRIVER}
-  aerospike:
-    driver: ${VOLUMES_DRIVER}
-  caddy:
-    driver: ${VOLUMES_DRIVER}
-  elasticsearch:
-    driver: ${VOLUMES_DRIVER}
-  mosquitto:
-    driver: ${VOLUMES_DRIVER}
-  confluence:
-    driver: ${VOLUMES_DRIVER}
-  sonarqube:
-    driver: ${VOLUMES_DRIVER}
-  cassandra:
-    driver: ${VOLUMES_DRIVER}
-  graylog:
+  redisinsight:
     driver: ${VOLUMES_DRIVER}
   docker-in-docker:
     driver: ${VOLUMES_DRIVER}
@@ -155,13 +115,10 @@ services:
         - ./php-worker/supervisord.d:/etc/supervisord.d
       extra_hosts:
         - "dockerhost:${DOCKER_HOST_IP}"
-      # ports:
-        # - "${WORKSPACE_SSH_PORT}:22"
-        # - "${WORKSPACE_BROWSERSYNC_HOST_PORT}:3000"
-        # - "${WORKSPACE_BROWSERSYNC_UI_HOST_PORT}:3001"
-        # - "${WORKSPACE_VUE_CLI_SERVE_HOST_PORT}:8080"
-        # - "${WORKSPACE_VUE_CLI_UI_HOST_PORT}:8000"
-        # - "${WORKSPACE_ANGULAR_CLI_SERVE_HOST_PORT}:4200"
+      ports:
+        - "18306:18306"
+        - "18307:18307"
+        - "18308:18308"
       tty: true
       environment:
         - PHP_IDE_CONFIG=${PHP_IDE_CONFIG}
@@ -289,6 +246,16 @@ services:
       networks:
         - backend
 
+### Redis ################################################
+    redis:
+      build: ./redis
+      volumes:
+        - ${DATA_PATH_HOST}/redis:/data
+      ports:
+        - "${REDIS_PORT}:6379"
+      networks:
+        - backend
+
 ### Redis Cluster ##########################################
     redis-cluster:
       build: ./redis-cluster
@@ -309,10 +276,14 @@ services:
         - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
         - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
       hostname: laradock-rabbitmq
+
+### redisinsight ################################################
+    redisinsight:
+      image: redislabs/redisinsight:latest
       volumes:
-        - ${DATA_PATH_HOST}/rabbitmq:/var/lib/rabbitmq
-      depends_on:
-        - php-fpm
+        - redisinsight:/db
+      ports:
+        - "8001:8001"
       networks:
         - backend
 
